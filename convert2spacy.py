@@ -20,7 +20,7 @@ client = MongoClient("mongodb://localhost:27017")
 
 db = client["resumeparser"]
 
-collection = db["tds"]
+collection = db["tds2"]
 
 # training_data_json = list(collection.find({}).limit(600))
 training_data_json = list(collection.find({}).skip(600))
@@ -70,11 +70,19 @@ for text, entities in training_data:
         for start, end, label in entities:
             span = doc.char_span(start, end, label=label, alignment_mode="contract")
             total += 1
-            if span is None or span.text.startswith(" ") or span.text.endswith(" "):
-                print(f"⚠  Skipping Entity : {text[0:30]}...")
+            if (
+                span is None
+                or span.text.startswith(" ")
+                or span.text.endswith(" ")
+                or span.text != span.text.strip()
+            ):
+                ent_text = text[start:end]
+                print(f"⚠  Skipping Entity : {text[0:30]}... {ent_text}")
                 skipped += 1
+
             else:
                 valid_ents.append(span)
+
         # map ents to valid_ents
         doc.ents = valid_ents
         db.add(doc)
